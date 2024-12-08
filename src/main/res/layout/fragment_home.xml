@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".ui.home.HomeFragment" >
+
+    <!-- Circular Progress Bar -->
+    <!-- app:layout_constraintBottom_toTopOf="@id/buttonContainer" -->
+    <ProgressBar
+        android:id="@+id/circularTimer"
+        style="@android:style/Widget.Material.ProgressBar.Horizontal"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:indeterminate="false"
+        android:max="100"
+        android:progress="100"
+        android:rotation="270"
+        android:progressDrawable="@drawable/circular_progress"
+        app:layout_constraintWidth_min="100dp"
+        app:layout_constraintHeight_min="100dp"
+        app:layout_constraintDimensionRatio="1:1"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/buttonContainer"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:padding="30dp"/>
+
+    <!-- Timer Display -->
+    <TextView
+        android:id="@+id/timerText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="60sp"
+        android:textStyle="bold"
+        android:textColor="@android:color/white"
+        android:text="@string/pause_string"
+        app:layout_constraintTop_toTopOf="@id/circularTimer"
+        app:layout_constraintBottom_toBottomOf="@id/circularTimer"
+        app:layout_constraintStart_toStartOf="@id/circularTimer"
+        app:layout_constraintEnd_toEndOf="@id/circularTimer" />
+
+    <!-- Button Container for Emergency and Cancel buttons -->
+    <LinearLayout
+        android:id="@+id/buttonContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        tools:ignore="MissingConstraints">
+
+        <View
+            android:id="@+id/top_line_banner"
+            android:layout_width="match_parent"
+            android:layout_height="2dp"
+            android:background="@color/light_gray"
+            android:layout_marginBottom="4dp" />
+
+        <!-- Gray banner with static text -->
+        <LinearLayout
+            android:id="@+id/top_banner"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:background="@color/light_gray"
+            android:gravity="center">
+
+            <TextView
+                android:id="@+id/banner_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/banner_string"
+                android:textSize="25sp"
+                android:textColor="@color/white"/>
+        </LinearLayout>
+
+        <View
+            android:id="@+id/bottom_line_banner"
+            android:layout_width="match_parent"
+            android:layout_height="2dp"
+            android:background="@color/light_gray"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="4dp" />
+
+        <!-- Emergency Button -->
+        <Button
+            app:backgroundTint="@color/light_orange"
+            android:id="@+id/emergencyButton"
+            android:layout_width="match_parent"
+            android:layout_height="68dp"
+            android:text="@string/call_emergency"
+            android:textStyle="bold"
+            android:textColor="@android:color/white"
+            android:drawableLeft="@drawable/ic_emergency"
+            android:textSize="20sp"
+            android:layout_marginTop="5dp"
+            android:layout_marginHorizontal="15dp" />
+
+        <!-- Cancel Button -->
+        <Button
+            android:id="@+id/cancelButton"
+            android:layout_width="match_parent"
+            android:layout_height="68dp"
+            android:text="@string/cancel"
+            android:textStyle="bold"
+            android:textColor="@android:color/white"
+            android:drawableLeft="@drawable/ic_cancel"
+            android:textSize="20sp"
+            android:layout_marginTop="5dp"
+            android:layout_marginHorizontal="15dp" />
+
+        <LinearLayout
+            android:id="@+id/accelerometerContainer"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <TextView
+                android:id="@+id/acc_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/acc_string"
+                android:textStyle="bold"
+                android:textColor="@android:color/white"
+                android:textSize="25sp" />
+
+            <!-- X Y Z values -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="horizontal"
+                android:gravity="center">
+
+                <TextView
+                    android:id="@+id/x_value"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/init_x"
+                    android:textColor="@android:color/white"
+                    android:textSize="20sp"
+                    android:layout_marginEnd="20dp" />
+
+                <TextView
+                    android:id="@+id/y_value"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/init_y"
+                    android:textColor="@android:color/white"
+                    android:textSize="20sp"
+                    android:layout_marginEnd="20dp" />
+
+                <TextView
+                    android:id="@+id/z_value"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/init_z"
+                    android:textColor="@android:color/white"
+                    android:textSize="20sp"
+                    android:layout_marginEnd="20dp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/gyroscopeContainer"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <TextView
+                android:id="@+id/gyro_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/gyro_string"
+                android:textStyle="bold"
+                android:textColor="@android:color/white"
+                android:textSize="25sp" />
+
+            <!-- X Y Z values -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="horizontal"
+                android:gravity="center">
+
+                <TextView
+                    android:id="@+id/gyro_x_value"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/init_x"
+                    android:textColor="@android:color/white"
+                    android:textSize="20sp"
+                    android:layout_marginEnd="20dp" />
+
+                <TextView
+                    android:id="@+id/gyro_y_value"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/init_y"
+                    android:textColor="@android:color/white"
+                    android:textSize="20sp"
+                    android:layout_marginEnd="20dp" />
+
+                <TextView
+                    android:id="@+id/gyro_z_value"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/init_z"
+                    android:textColor="@android:color/white"
+                    android:textSize="20sp"
+                    android:layout_marginEnd="20dp" />
+            </LinearLayout>
+        </LinearLayout>
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
