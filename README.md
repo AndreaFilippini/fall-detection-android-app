@@ -13,7 +13,7 @@ The emergency phase is accompanied by an intermittent beep to signal the locatio
 [Android Studio](https://developer.android.com/)
 
 # Fall Detection Algorithm
-The algorithm involves the initial use of the accelerometer sensor, accumulating the values in a Single Magnitude Vector, and then comparing it to a fixed threshold value.
+The algorithm involves the initial use of the accelerometer sensor and comparing the Z-Value with a fixed threshold value.
 In order to filter out any false positives, in case the threshold is exceeded, the gyroscope sensor is used to verify the phone's position relative to the ground.
 The idea is that the phone, in the event that person has felt ill and is lying down, is parallel to the ground, while the device, normally stowed in a pocket, has an angle perpendicular to the ground.
 
