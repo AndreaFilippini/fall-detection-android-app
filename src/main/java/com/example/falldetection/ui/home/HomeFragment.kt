@@ -788,8 +788,8 @@ class HomeFragment : Fragment() , SensorEventListener {
         zValueText.text = getString(R.string.z_value, dec.format(z))
 
         // if the Z value is greater than the threshold, then a fall is detected
-        if (values[2] > FALL_THRESHOLD) {
-        //if (sqrt(x * x + y * y + z * z) > FALL_THRESHOLD) {
+        // if (values[2] > FALL_THRESHOLD) {
+        if (sqrt(x * x + y * y + z * z) > FALL_THRESHOLD) {
             // set the falling flag to true
             fallDetected = true
         }
