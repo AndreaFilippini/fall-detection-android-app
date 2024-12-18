@@ -110,8 +110,8 @@ class DashboardFragment : Fragment() {
         // add a listener to the previous button to call a the storing function of the shared encrypted model
         setCredentialsButton.setOnClickListener {
             // get the entered credentials from the EditText
-            var userSender = inputUserSender.text.toString()
-            var passSender = inputPassSender.text.toString()
+            val userSender = inputUserSender.text.toString()
+            val passSender = inputPassSender.text.toString()
             // if the credentials are not empty, then store them in the application
             if ((userSender != "") && (passSender != "")){
                 emailCredentials.storeCredentials(userSender, passSender)

@@ -72,6 +72,7 @@ import javax.mail.Transport
 import javax.mail.internet.InternetAddress
 import javax.mail.internet.MimeMessage
 import javax.mail.Authenticator
+import kotlin.math.sqrt
 
 class HomeFragment : Fragment() , SensorEventListener {
     // flag to determine whether there was a fall
@@ -93,7 +94,7 @@ class HomeFragment : Fragment() , SensorEventListener {
     private val REQUEST_CODE_SEND_SMS = 1003
     private val REQUEST_CODE_CALLING = 1004
 
-    // Shared viewModel to share informations between fragments
+    // Shared viewModel to share information between fragments
     private val notificationViewModel: SharedNotificationModel by activityViewModels()
     private val timerViewModel: SharedTimerViewModel by activityViewModels()
     private val listItemViewModel: SharedListViewModel by activityViewModels()
@@ -139,8 +140,8 @@ class HomeFragment : Fragment() , SensorEventListener {
     private lateinit var cancelButton: Button
 
     // threshold values to detect fall
-    private var HORIZONTAL_THRESHOLD = 0.4f
-    private var Z_THRESHOLD = 3.0f
+    private var HORIZONTAL_THRESHOLD = 0.3f
+    private var FALL_THRESHOLD = 10.0f
 
     // default values and variable for fall countdown
     private var DEFAULT_SECONDS = 10
@@ -159,7 +160,6 @@ class HomeFragment : Fragment() , SensorEventListener {
 
     // default values and variable for emergency sound delay
     private var DEFAULT_SOUND_SECONDS = 2
-    //private var countdownSound: CountDownTimer? = null
     private var totalSoundInSeconds = DEFAULT_SOUND_SECONDS
     private var totalSoundInMillis = 0L
     //private var isSoundRunning = false
@@ -169,7 +169,7 @@ class HomeFragment : Fragment() , SensorEventListener {
     // array to store function indexes to call it based on the order in the dashboard fragment
     private val emergencyOpIndex: Array<Pair<Int, String>?> = arrayOfNulls(emergencyOperations.size)
 
-    // list of phoneNumber and emailContats to iterate on during the emergency phase
+    // list of phoneNumber and emailContacts to iterate on during the emergency phase
     private var phoneNumbersList : List<String> = emptyList()
     private var emailContactsList: List<String> = emptyList()
 
@@ -765,7 +765,7 @@ class HomeFragment : Fragment() , SensorEventListener {
         setDataContainersVisibility(View.VISIBLE)
     }
 
-    // function to interact with the sensors and register them to specific handeling functions
+    // function to interact with the sensors and register them to specific handling functions
     override fun onSensorChanged(event: SensorEvent?) {
         event ?: return
         // associates each sensor with a management function
@@ -777,13 +777,19 @@ class HomeFragment : Fragment() , SensorEventListener {
 
     // function to update accelerometer information on the screen and check for a fall
     private fun handleAccelerometerData(values: FloatArray) {
+        // get X,Y,Z values
+        val x = values[0]
+        val y = values[1]
+        val z = values[2]
+
         // update the X,Y,Z labels with the current data of the accelerometer
-        xValueText.text = getString(R.string.x_value,  dec.format(values[1]))
-        yValueText.text = getString(R.string.y_value, dec.format(values[1]))
-        zValueText.text = getString(R.string.z_value, dec.format(values[2]))
+        xValueText.text = getString(R.string.x_value,  dec.format(x))
+        yValueText.text = getString(R.string.y_value, dec.format(y))
+        zValueText.text = getString(R.string.z_value, dec.format(z))
 
         // if the Z value is greater than the threshold, then a fall is detected
-        if (values[2] > Z_THRESHOLD) {
+        if (values[2] > FALL_THRESHOLD) {
+        //if (sqrt(x * x + y * y + z * z) > FALL_THRESHOLD) {
             // set the falling flag to true
             fallDetected = true
         }
