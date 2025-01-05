@@ -45,4 +45,9 @@
     <string name="add_user_hint_string">Enter sender email</string>
     <string name="add_password_hint_string">Enter 16&#8211;digit password</string>
     <string name="add_credentials_string">Set sender credentials</string>
+    <string name="emergency_sound">Emergency sound…</string>
+    <string name="acc_not_available">Accelerometer not available</string>
+    <string name="gyro_not_available">Gyroscope not available</string>
+    <string name="seconds_left_timer">%d s</string>
+    <string name="banner_operation_text">%1$s… [%2$d s]</string>
 </resources>

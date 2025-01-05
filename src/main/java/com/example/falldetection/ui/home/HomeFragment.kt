@@ -1,13 +1,11 @@
 package com.example.falldetection.ui.home
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Color
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
@@ -36,6 +34,7 @@ import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import com.example.falldetection.R
 import com.example.falldetection.ui.notifications.Notification
@@ -73,10 +72,16 @@ import javax.mail.internet.InternetAddress
 import javax.mail.internet.MimeMessage
 import javax.mail.Authenticator
 import kotlin.math.sqrt
+import kotlin.math.abs
 
 class HomeFragment : Fragment() , SensorEventListener {
-    // flag to determine whether there was a fall
+    // flags to determine whether there was a fall
     private var fallDetected = false
+    private var fallProcess = false
+
+    // sensors values for phone orientation used at the end of the detection process
+    private lateinit var AccGlobalValues: FloatArray
+    private lateinit var GyroGlobalValues: FloatArray
 
     // url of the web server to send messages to
     private lateinit var BASE_URL : String
@@ -140,7 +145,8 @@ class HomeFragment : Fragment() , SensorEventListener {
     private lateinit var cancelButton: Button
 
     // threshold values to detect fall
-    private var HORIZONTAL_THRESHOLD = 0.3f
+    private var UPPER_HORIZONTAL_THRESHOLD = 3.0f
+    private var LOWER_HORIZONTAL_THRESHOLD = 1.0f
     private var FALL_THRESHOLD = 10.0f
 
     // default values and variable for fall countdown
@@ -180,7 +186,6 @@ class HomeFragment : Fragment() , SensorEventListener {
     // variable that will be store the uri of the notification sound
     private var notificationUri: Uri? = null
 
-    @SuppressLint("SetTextI18n")
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -219,7 +224,7 @@ class HomeFragment : Fragment() , SensorEventListener {
             xValueText.visibility = View.GONE
             yValueText.visibility = View.GONE
             zValueText.visibility = View.GONE
-            accValueText.text = "Accelerometer not available"
+            accValueText.text =  getString(R.string.acc_not_available)
         }
 
         // initialize gyroscope sensor
@@ -237,7 +242,7 @@ class HomeFragment : Fragment() , SensorEventListener {
             xGyroValueText.visibility = View.GONE
             yGyroValueText.visibility = View.GONE
             zGyroValueText.visibility = View.GONE
-            gyroValueText.text = "Gyroscope not available"
+            gyroValueText.text = getString(R.string.gyro_not_available)
         }
 
         // get the reference for top banner elements
@@ -304,7 +309,7 @@ class HomeFragment : Fragment() , SensorEventListener {
                 isTimerRunning = true
                 // calculate the seconds left before the ends of the timer and print them on screen
                 val secondsLeft = (millisUntilFinished + 1000) / 1000
-                timerText.text = "$secondsLeft s"
+                timerText.text = requireContext().getString(R.string.seconds_left_timer, secondsLeft)
 
                 // calculate progress percentage and update the progress bar
                 val progress = (millisUntilFinished * 100 / totalTimeInMillis).toInt()
@@ -340,7 +345,8 @@ class HomeFragment : Fragment() , SensorEventListener {
                     }
                 }
                 // update the top banner with the name of the function and the seconds left for this operation
-                topBannerText.text = emergencyOpIndex[operationIndex]?.second.toString() + "... [" + delayLeft.toString() + " s]"
+                val operationText = emergencyOpIndex[operationIndex]?.second.toString()
+                topBannerText.text = requireContext().getString(R.string.banner_operation_text, operationText, delayLeft)
             }
 
             override fun onFinish() {
@@ -356,7 +362,7 @@ class HomeFragment : Fragment() , SensorEventListener {
                 }
                 // at the end of the execution of the emergency routine, set a default message
                 // and restore the countdown progress bar timer on the top
-                topBannerText.text = "Emergency sound..."
+                topBannerText.text = getString(R.string.emergency_sound)
                 resetTimer()
             }
         }
@@ -516,10 +522,9 @@ class HomeFragment : Fragment() , SensorEventListener {
     }
 
     // function to init handle the emergency phase
-    @SuppressLint("ResourceType")
     private fun handleFallDetected(){
         // make the top banner green to display the current handling functions name
-        topBanner.setBackgroundColor(Color.parseColor(resources.getString(R.color.light_green)))
+        topBanner.setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.light_green))
         // remove the emergency button
         removeEmergency()
         // add the notification of a fall in the history
@@ -757,10 +762,9 @@ class HomeFragment : Fragment() , SensorEventListener {
     }
 
     // function to reset the state of banner and the buttons, sensor information to the default state
-    @SuppressLint("ResourceType")
     private fun resetNoFallElements(){
         topBannerText.text = getString(R.string.banner_string)
-        topBanner.setBackgroundColor(Color.parseColor(resources.getString(R.color.light_gray)))
+        topBanner.setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.light_gray))
         setButtonVisibility(View.GONE)
         setDataContainersVisibility(View.VISIBLE)
     }
@@ -787,8 +791,13 @@ class HomeFragment : Fragment() , SensorEventListener {
         yValueText.text = getString(R.string.y_value, dec.format(y))
         zValueText.text = getString(R.string.z_value, dec.format(z))
 
-        // if the Z value is greater than the threshold, then a fall is detected
-        // if (values[2] > FALL_THRESHOLD) {
+        // if a fall detection process is already active, update the global accelerometer values and return
+        if(fallProcess){
+            AccGlobalValues = values
+            return
+        }
+
+        // if the accelerometer magnitude value is greater than the threshold, then a fall is detected
         if (sqrt(x * x + y * y + z * z) > FALL_THRESHOLD) {
             // set the falling flag to true
             fallDetected = true
@@ -796,36 +805,82 @@ class HomeFragment : Fragment() , SensorEventListener {
     }
 
     // function to update gyroscope information on the screen and check for a fall
-    @SuppressLint("ResourceType")
     private fun handleGyroscopeData(values: FloatArray) {
-        // update the X,Y,Z labels with the current data of the gyroscope
-        xGyroValueText.text = getString(R.string.x_value,  dec.format(values[1]))
-        yGyroValueText.text = getString(R.string.y_value, dec.format(values[1]))
-        zGyroValueText.text = getString(R.string.z_value, dec.format(values[2]))
+        // extract values from gyroscope sensor
+        val yaw = values[0]
+        val pitch = values[1]
+        val roll = values[2]
 
-        // if a fall is detected from the accelerometer
+        // update the X,Y,Z labels with the current data of the gyroscope
+        xGyroValueText.text = getString(R.string.x_value,  dec.format(yaw))
+        yGyroValueText.text = getString(R.string.y_value, dec.format(pitch))
+        zGyroValueText.text = getString(R.string.z_value, dec.format(roll))
+
+        // if a fall detection process is already active, update the global gyroscope values and return
+        if(fallProcess){
+            GyroGlobalValues = values
+            return
+        }
+
+        // if both sensors accelerometer and gyroscope detect a fall,
+        // wait a short pause for the values to settle and then check the phone's orientation
         if (fallDetected) {
-            // use the pith and the roll from the gyroscope to check if the phone is parallel to the floor to filter false positive
-            val pitch = values[1]
-            val roll = values[2]
-            if (pitch < HORIZONTAL_THRESHOLD && roll < HORIZONTAL_THRESHOLD) {
-                // the emergency and cancel button visible
-                setButtonVisibility(View.VISIBLE)
-                // hide the information about sensor, since the emergency phase is now active
-                setDataContainersVisibility(View.GONE)
-                // print that a fall was detected in the top banner and set his background to red
-                topBannerText.text = getString(R.string.fall_string)
-                topBanner.setBackgroundColor(Color.parseColor(resources.getString(R.color.light_red)))
-                // set the countdown progress to the start default value and start the timer
-                progressBar.max = 100
-                countdownTimer?.start()
-                // send a notification that a fall was detected and make the phone vibrate
-                sendNotification()
-                vibratePhone()
+            // calculate gyroscope SMV value
+            val gyroResult = (sqrt(values[0] * values[0] +
+                    values[1] * values[1] +
+                    values[2] * values[2]) > UPPER_HORIZONTAL_THRESHOLD)
+            // if the gyroscope magnitude is greater than the threshold, then a fall is detected
+            if(gyroResult) {
+                // set the flag that a detection process is running to true
+                fallProcess = true
+                // wait for a certain amount of time and then  check the orientation of the phone
+                handler.postDelayed({ checkLanding() }, 700)
             }
-            // reset fall detection to false
+            // reset fall detection flag
             fallDetected = false
         }
+    }
+
+    // function used to check if the phone is landed horizontally
+    private fun checkLanding(){
+        // get X,Y,Z from accelerometer
+        val x = AccGlobalValues[0]
+        val y = AccGlobalValues[1]
+        val z = AccGlobalValues[2]
+
+        // get values from gyroscope
+        val yaw = GyroGlobalValues[0]
+        val pitch = GyroGlobalValues[1]
+        val roll = GyroGlobalValues[2]
+
+        // accelerometer use to check if the phone is horizontal
+        // verifying that the component on the z axis is larger than in the other directions
+        val accResult = ((abs(z) > abs(x)) && (abs(z) > abs(y)))
+        // if the gyroscope values are below a small threshold, that the phone has dropped and is stationary
+        val gyroResult = ((yaw < LOWER_HORIZONTAL_THRESHOLD) &&
+                          (pitch < LOWER_HORIZONTAL_THRESHOLD) &&
+                          (roll < LOWER_HORIZONTAL_THRESHOLD))
+
+        // if the accelerometer and gyroscope values are in ranges, then a fall has been detected
+        if(accResult && gyroResult){
+            // the emergency and cancel button visible
+            setButtonVisibility(View.VISIBLE)
+            // hide the information about sensor, since the emergency phase is now active
+            setDataContainersVisibility(View.GONE)
+            // print that a fall was detected in the top banner and set his background to red
+            topBannerText.text = getString(R.string.fall_string)
+            topBanner.setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.light_red))
+            // set the countdown progress to the start default value and start the timer
+            progressBar.max = 100
+            countdownTimer?.start()
+            // send a notification that a fall was detected and make the phone vibrate
+            sendNotification()
+            // make the phone vibrates
+            vibratePhone()
+        }
+
+        // reset fall detection process flag to false
+        fallProcess = false
     }
 
     // function to send a message to a web server
