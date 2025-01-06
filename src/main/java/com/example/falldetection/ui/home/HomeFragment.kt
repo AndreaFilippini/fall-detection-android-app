@@ -834,35 +834,46 @@ class HomeFragment : Fragment() , SensorEventListener {
                 // set the flag that a detection process is running to true
                 fallProcess = true
                 // wait for a certain amount of time and then  check the orientation of the phone
-                handler.postDelayed({ checkLanding() }, 700)
+                handler.postDelayed({ checkVerticalFall() }, 500)
             }
             // reset fall detection flag
             fallDetected = false
         }
     }
 
-    // function used to check if the phone is landed horizontally
-    private fun checkLanding(){
+    // function used to check if the phone is falling vertically
+    private fun checkVerticalFall(){
         // get X,Y,Z from accelerometer
         val x = AccGlobalValues[0]
         val y = AccGlobalValues[1]
         val z = AccGlobalValues[2]
 
+        // accelerometer use to check if the phone is horizontal
+        // verifying that the component on the z axis is larger than in the other directions
+        if((abs(z) > abs(x)) && (abs(z) > abs(y))){
+            // Wait a period of time for the values to stabilize
+            // before checking that the phone has landed
+            handler.postDelayed({ checkLanding() }, 500)
+        }else{
+            // reset fall detection process flag to false
+            fallProcess = false
+        }
+    }
+
+    // function used to check if the phone is landed
+    private fun checkLanding(){
         // get values from gyroscope
         val yaw = GyroGlobalValues[0]
         val pitch = GyroGlobalValues[1]
         val roll = GyroGlobalValues[2]
 
-        // accelerometer use to check if the phone is horizontal
-        // verifying that the component on the z axis is larger than in the other directions
-        val accResult = ((abs(z) > abs(x)) && (abs(z) > abs(y)))
         // if the gyroscope values are below a small threshold, that the phone has dropped and is stationary
         val gyroResult = ((yaw < LOWER_HORIZONTAL_THRESHOLD) &&
                           (pitch < LOWER_HORIZONTAL_THRESHOLD) &&
                           (roll < LOWER_HORIZONTAL_THRESHOLD))
 
         // if the accelerometer and gyroscope values are in ranges, then a fall has been detected
-        if(accResult && gyroResult){
+        if(gyroResult){
             // the emergency and cancel button visible
             setButtonVisibility(View.VISIBLE)
             // hide the information about sensor, since the emergency phase is now active
